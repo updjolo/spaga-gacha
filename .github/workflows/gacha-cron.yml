@@ -1,0 +1,27 @@
+name: Continuous Gacha Server
+
+on:
+  schedule:
+    # 1分ごとに実行（24時間365日）
+    - cron: '* * * * *'
+  workflow_dispatch:
+
+jobs:
+  run-gacha:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install firebase-admin
+
+      - name: Run Gacha Script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        node gacha-server.js
