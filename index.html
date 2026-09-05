@@ -126,7 +126,6 @@
 
         /* ボタン群コンテナ */
         #action-btn-container {
-            display: flex;
             flex-direction: column;
             gap: 12px;
             margin: 15px auto;
@@ -286,18 +285,6 @@
             font-family: 'Courier New', monospace;
             font-size: 13px;
         }
-        
-        button.reset-btn {
-            margin-top: 15px;
-            padding: 10px 20px;
-            background: #666;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        button.reset-btn:hover { background: #888; }
     </style>
 </head>
 <body>
@@ -344,10 +331,26 @@
     <div class="box">
         <h3>📜 当選履歴（直近50件）</h3>
         <div id="history-list"></div>
-        <button class="reset-btn" onclick="resetAll()">すべてリセット</button>
     </div>
 
-    <script>
+    <!-- Firebase SDKの読み込み -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCurJ0xKJLE-Z9GGEWcN-R3f5aAmX0FWmI",
+            authDomain: "spaga-gacha.firebaseapp.com",
+            projectId: "spaga-gacha",
+            storageBucket: "spaga-gacha.firebasestorage.app",
+            messagingSenderId: "53575541764",
+            appId: "1:53575541764:web:128b89f7b7bbd91c4d0151",
+            measurementId: "G-J5D2PDVF1Y"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
         const members = ["門林有羽", "竹内ななみ", "鎌田彩樺", "柏綾菜", "河村果歩", "櫻井穂夏", "浜田萌帆", "二宮伶寧"];
 
         const memberColors = {
@@ -389,111 +392,61 @@
         const reel4 = ["羽", "な", "樺", "歩", "夏", "帆", "寧"];
         const reel5 = ["み"];
 
-        let counts = JSON.parse(localStorage.getItem('gacha_cnt_v26')) || {};
-        let history = JSON.parse(localStorage.getItem('gacha_history_v26')) || [];
-        let lastWinner = localStorage.getItem('gacha_last_winner_v26') || "";
-        let lastWinTime = localStorage.getItem('gacha_last_wintime_v26') || "";
-        let lastHitTimestamps = JSON.parse(localStorage.getItem('gacha_last_hits_v26')) || {};
+        let counts = {};
+        let history = [];
+        let lastWinner = "";
+        let lastWinTime = "";
+        let lastHitTimestamps = {};
 
-        members.forEach(m => { if (counts[m] === undefined) counts[m] = 0; });
+        members.forEach(m => { counts[m] = 0; });
 
-        members.forEach(m => {
-            if (counts[m] > 0 && !lastHitTimestamps[m]) {
-                let found = history.find(item => item.name === m);
-                if (found) {
-                    lastHitTimestamps[m] = Date.now();
-                } else {
-                    lastHitTimestamps[m] = Date.now();
-                }
-            }
-        });
-
-        function updateClock() {
+        // 画面描画用関数
+        function render() {
             const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const d = String(now.getDate()).padStart(2, '0');
-            const day = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
-            document.getElementById('date-display').innerText = `${y}年${m}月${d}日 (${day})`;
+            const currentMonth = now.getMonth() + 1;
+            const currentDate = now.getDate();
 
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('time-display').innerText = `${hh}:${mm}:${ss}`;
-
-            updateSinceTargetDisplay(now.getTime());
-            updateRarestDisplay(now.getTime());
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        if (lastWinner && members.includes(lastWinner)) {
-            showWinnerDisplay(lastWinner, lastWinTime);
-        }
-
-        // 2026年9月13日 00:00:00 までの残り時間を計算する関数
-        function updateSinceTargetDisplay(currentTimestamp) {
-            const targetTime = new Date(2026, 8, 13, 0, 0, 0).getTime(); // 月は0始まりなので 8 = 9月
-            let diffMs = targetTime - currentTimestamp; // 目標時刻までの残りミリ秒
-            
-            const sinceTargetEl = document.getElementById("since-target-info");
-
-            if (diffMs <= 0) {
-                sinceTargetEl.innerText = "2026年9月13日を迎えました！";
-                return;
-            }
-
-            const diffSec = Math.floor(diffMs / 1000);
-            const days = Math.floor(diffSec / (3600 * 24));
-            const hours = Math.floor((diffSec % (3600 * 24)) / 3600);
-            const minutes = Math.floor((diffSec % 3600) / 60);
-            const seconds = diffSec % 60;
-
-            sinceTargetEl.innerHTML = `<span style="color:#ff4081">${days}日</span> ${hours}時間 ${minutes}分 ${seconds}秒`;
-        }
-
-        function updateRarestDisplay(currentTimestamp) {
-            let rarestMember = null;
-            let oldestTime = Infinity;
-
+            let html = "";
             members.forEach(m => {
-                let hitTime = lastHitTimestamps[m];
-                if (hitTime === undefined) {
-                    hitTime = 0;
-                }
-                if (hitTime < oldestTime) {
-                    oldestTime = hitTime;
-                    rarestMember = m;
-                }
+                let xUrl = memberXUrls[m] || "#";
+                let color = memberColors[m] || "#ffffff";
+                
+                let birthdayObj = memberBirthdays[m];
+                let isBirthday = (birthdayObj && birthdayObj.month === currentMonth && birthdayObj.day === currentDate);
+                let birthdayHtml = isBirthday ? `<span class="birthday-tag">🎂 Happy Birthday ${m}</span>` : "";
+
+                html += `
+                    <div class="row">
+                        <div class="member-info">
+                            <span class="member-badge" style="background-color: ${color};"></span>
+                            <span class="member-name" style="color: ${color};">${m}</span>
+                            ${birthdayHtml}
+                            <a href="${xUrl}" target="_blank" rel="noopener noreferrer" class="x-sub-link">X ↗</a>
+                        </div>
+                        <span class="count-num">${counts[m] || 0} 回</span>
+                    </div>
+                `;
             });
+            document.getElementById("list").innerHTML = html;
 
-            const rarestInfoEl = document.getElementById("rarest-info");
-            if (!rarestMember) {
-                rarestInfoEl.innerText = "データなし";
-                return;
+            let historyHtml = "";
+            if (!history || history.length === 0) {
+                historyHtml = `<div style="color:#777; text-align:center; padding:10px;">まだ履歴はありません</div>`;
+            } else {
+                history.forEach(item => {
+                    let color = memberColors[item.name] || "#ffffff";
+                    historyHtml += `
+                        <div class="history-row">
+                            <div class="history-member">
+                                <span class="history-badge" style="background-color: ${color};"></span>
+                                <span style="color: ${color}; font-weight: bold;">🎉 ${item.name}</span>
+                            </div>
+                            <span class="history-time">${item.time}</span>
+                        </div>
+                    `;
+                });
             }
-
-            if (oldestTime === 0) {
-                rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span>（まだ一度も出ていません）`;
-                return;
-            }
-
-            let diffMs = currentTimestamp - oldestTime;
-            if (diffMs < 0) diffMs = 0;
-
-            const diffSec = Math.floor(diffMs / 1000);
-            const days = Math.floor(diffSec / (3600 * 24));
-            const hours = Math.floor((diffSec % (3600 * 24)) / 3600);
-            const minutes = Math.floor((diffSec % 3600) / 60);
-            const seconds = diffSec % 60;
-
-            let timeStr = "";
-            if (days > 0) timeStr += `${days}日`;
-            if (days > 0 || hours > 0) timeStr += `${hours}時間`;
-            if (days > 0 || hours > 0 || minutes > 0) timeStr += `${minutes}分`;
-            timeStr += `${seconds}秒`;
-
-            rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span> ―― 最後に当たってから <span style="color:#ff4081">${timeStr}</span> ぶり`;
+            document.getElementById("history-list").innerHTML = historyHtml;
         }
 
         function showWinnerDisplay(name, timeString) {
@@ -544,56 +497,102 @@
             document.getElementById("action-btn-container").style.display = "flex";
         }
 
-        function render() {
-            const now = new Date();
-            const currentMonth = now.getMonth() + 1;
-            const currentDate = now.getDate();
+        // Firebaseからリアルタイムでデータを同期受け取り
+        onValue(ref(db, 'gacha_state'), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                counts = data.counts || counts;
+                history = data.history || [];
+                lastWinner = data.lastWinner || "";
+                lastWinTime = data.lastWinTime || "";
+                lastHitTimestamps = data.lastHitTimestamps || {};
 
-            let html = "";
-            members.forEach(m => {
-                let xUrl = memberXUrls[m] || "#";
-                let color = memberColors[m] || "#ffffff";
-                
-                let birthdayObj = memberBirthdays[m];
-                let isBirthday = (birthdayObj && birthdayObj.month === currentMonth && birthdayObj.day === currentDate);
-                let birthdayHtml = isBirthday ? `<span class="birthday-tag">🎂 Happy Birthday ${m}</span>` : "";
-
-                html += `
-                    <div class="row">
-                        <div class="member-info">
-                            <span class="member-badge" style="background-color: ${color};"></span>
-                            <span class="member-name" style="color: ${color};">${m}</span>
-                            ${birthdayHtml}
-                            <a href="${xUrl}" target="_blank" rel="noopener noreferrer" class="x-sub-link">X ↗</a>
-                        </div>
-                        <span class="count-num">${counts[m]} 回</span>
-                    </div>
-                `;
-            });
-            document.getElementById("list").innerHTML = html;
-
-            let historyHtml = "";
-            if (history.length === 0) {
-                historyHtml = `<div style="color:#777; text-align:center; padding:10px;">まだ履歴はありません</div>`;
-            } else {
-                history.forEach(item => {
-                    let color = memberColors[item.name] || "#ffffff";
-                    historyHtml += `
-                        <div class="history-row">
-                            <div class="history-member">
-                                <span class="history-badge" style="background-color: ${color};"></span>
-                                <span style="color: ${color}; font-weight: bold;">🎉 ${item.name}</span>
-                            </div>
-                            <span class="history-time">${item.time}</span>
-                        </div>
-                    `;
-                });
+                if (lastWinner && members.includes(lastWinner)) {
+                    showWinnerDisplay(lastWinner, lastWinTime);
+                }
+                render();
             }
-            document.getElementById("history-list").innerHTML = historyHtml;
+        });
 
-            localStorage.setItem('gacha_cnt_v26', JSON.stringify(counts));
-            localStorage.setItem('gacha_history_v26', JSON.stringify(history));
-            localStorage.setItem('gacha_last_hits_v26', JSON.stringify(lastHitTimestamps));
+        // 時計とカウントダウンの更新
+        function updateClock() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const day = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+            document.getElementById('date-display').innerText = `${y}年${m}月${d}日 (${day})`;
+
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('time-display').innerText = `${hh}:${mm}:${ss}`;
+
+            updateSinceTargetDisplay(now.getTime());
+            updateRarestDisplay(now.getTime());
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function updateSinceTargetDisplay(currentTimestamp) {
+            const targetTime = new Date(2026, 8, 13, 0, 0, 0).getTime();
+            let diffMs = targetTime - currentTimestamp;
+            const sinceTargetEl = document.getElementById("since-target-info");
+
+            if (diffMs <= 0) {
+                sinceTargetEl.innerText = "2026年9月13日を迎えました！";
+                return;
+            }
+
+            const diffSec = Math.floor(diffMs / 1000);
+            const days = Math.floor(diffSec / (3600 * 24));
+            const hours = Math.floor((diffSec % (3600 * 24)) / 3600);
+            const minutes = Math.floor((diffSec % 3600) / 60);
+            const seconds = diffSec % 60;
+
+            sinceTargetEl.innerHTML = `<span style="color:#ff4081">${days}日</span> ${hours}時間 ${minutes}分 ${seconds}秒`;
+        }
+
+        function updateRarestDisplay(currentTimestamp) {
+            let rarestMember = null;
+            let oldestTime = Infinity;
+
+            members.forEach(m => {
+                let hitTime = lastHitTimestamps[m];
+                if (hitTime === undefined) hitTime = 0;
+                if (hitTime < oldestTime) {
+                    oldestTime = hitTime;
+                    rarestMember = m;
+                }
+            });
+
+            const rarestInfoEl = document.getElementById("rarest-info");
+            if (!rarestMember) {
+                rarestInfoEl.innerText = "データなし";
+                return;
+            }
+
+            if (oldestTime === 0) {
+                rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span>（まだ一度も出ていません）`;
+                return;
+            }
+
+            let diffMs = currentTimestamp - oldestTime;
+            if (diffMs < 0) diffMs = 0;
+
+            const diffSec = Math.floor(diffMs / 1000);
+            const days = Math.floor(diffSec / (3600 * 24));
+            const hours = Math.floor((diffSec % (3600 * 24)) / 3600);
+            const minutes = Math.floor((diffSec % 3600) / 60);
+            const seconds = diffSec % 60;
+
+            let timeStr = "";
+            if (days > 0) timeStr += `${days}日`;
+            if (days > 0 || hours > 0) timeStr += `${hours}時間`;
+            if (days > 0 || hours > 0 || minutes > 0) timeStr += `${minutes}分`;
+            timeStr += `${seconds}秒`;
+
+            rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span> ―― 最後に当たってから <span style="color:#ff4081">${timeStr}</span> ぶり`;
         }
 
         function getRandomLength() {
@@ -603,6 +602,7 @@
             else return 5;
         }
 
+        // ガチャを回す処理（誰か1人がページを開いていれば自動で回ってFirebaseに保存され、全員に同期します）
         function loop() {
             const len = getRandomLength();
             let name = "";
@@ -611,12 +611,8 @@
             name += reel2[Math.floor(Math.random() * reel2.length)];
             name += reel3[Math.floor(Math.random() * reel3.length)];
 
-            if (len >= 4) {
-                name += reel4[Math.floor(Math.random() * reel4.length)];
-            }
-            if (len === 5) {
-                name += reel5[Math.floor(Math.random() * reel5.length)];
-            }
+            if (len >= 4) name += reel4[Math.floor(Math.random() * reel4.length)];
+            if (len === 5) name += reel5[Math.floor(Math.random() * reel5.length)];
 
             document.getElementById("live-spinning").innerText = `ガチャ回転中: ${name}`;
 
@@ -627,47 +623,25 @@
                 const ss = String(now.getSeconds()).padStart(2, '0');
                 const timeString = `${hh}:${mm}:${ss}`;
 
-                showWinnerDisplay(name, timeString);
-
-                counts[name]++;
+                counts[name] = (counts[name] || 0) + 1;
                 lastWinner = name;
                 lastWinTime = timeString;
-                
                 lastHitTimestamps[name] = now.getTime();
 
                 history.unshift({ name: name, time: timeString });
-                if (history.length > 50) {
-                    history.pop();
-                }
-                
-                localStorage.setItem('gacha_last_winner_v26', name);
-                localStorage.setItem('gacha_last_wintime_v26', timeString);
-                render();
+                if (history.length > 50) history.pop();
+
+                // Firebaseに最新状態を保存（これによりアクセスしている全員の画面が一斉に同期！）
+                set(ref(db, 'gacha_state'), {
+                    counts: counts,
+                    history: history,
+                    lastWinner: lastWinner,
+                    lastWinTime: lastWinTime,
+                    lastHitTimestamps: lastHitTimestamps
+                });
             }
         }
 
-        function resetAll() {
-            if (confirm("カウントと履歴をすべてリセットしますか？")) {
-                members.forEach(m => counts[m] = 0);
-                history = [];
-                lastWinner = "";
-                lastWinTime = "";
-                lastHitTimestamps = {};
-                localStorage.removeItem('gacha_last_winner_v26');
-                localStorage.removeItem('gacha_last_wintime_v26');
-                localStorage.removeItem('gacha_last_hits_v26');
-                document.getElementById("action-btn-container").style.display = "none";
-                document.getElementById("win-time-display").style.display = "none";
-                
-                const displayEl = document.getElementById("display");
-                displayEl.innerText = "ガチャ起動中...";
-                displayEl.style.color = "#ff4081";
-                
-                render();
-            }
-        }
-
-        render();
         setInterval(loop, 50);
     </script>
 </body>
