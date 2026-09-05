@@ -41,46 +41,20 @@
             color: #ddd;
             margin-bottom: 5px;
         }
+        #birthday-display {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff80ab;
+            margin: 3px 0 6px;
+            min-height: 20px;
+            text-shadow: 0 1px 4px rgba(255, 64, 129, 0.35);
+        }
         #time-display {
             font-size: 45px;
             font-weight: bold;
             color: #fff;
             font-family: 'Courier New', monospace;
             letter-spacing: 2px;
-        }
-
-        /* 2026年9/13までのカウントダウンボックス */
-        #since-target-box {
-            background: rgba(30, 144, 255, 0.15);
-            border: 1px dashed #1e90ff;
-            border-radius: 12px;
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            width: 90%;
-            max-width: 500px;
-            font-size: 14px;
-            color: #87cefa;
-        }
-        #since-target-box span {
-            font-weight: bold;
-            color: #fff;
-        }
-
-        /* 最も出ていないメンバーの表示エリア */
-        #rarest-box {
-            background: rgba(233, 30, 99, 0.15);
-            border: 1px dashed #e91e63;
-            border-radius: 12px;
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            width: 90%;
-            max-width: 500px;
-            font-size: 14px;
-            color: #ff80ab;
-        }
-        #rarest-box span {
-            font-weight: bold;
-            color: #fff;
         }
 
         /* リアルタイムモニター */
@@ -94,6 +68,12 @@
             display: inline-block;
             font-family: 'Courier New', monospace;
             border: 1px dashed #777;
+        }
+
+        #longest-absent {
+            margin: 8px 0 12px;
+            font-size: 14px;
+            color: #ddd;
         }
 
         /* 当選ステータスコンテナ */
@@ -124,48 +104,27 @@
             display: none;
         }
 
-        /* ボタン群コンテナ */
-        #action-btn-container {
-            flex-direction: column;
-            gap: 12px;
+        /* 当選時のXリンクボタン表示枠 */
+        #x-link-container {
             margin: 15px auto;
-            width: 90%;
-            max-width: 500px;
             display: none;
         }
-
-        .action-btn {
-            display: block;
+        .x-main-btn {
+            display: inline-block;
             padding: 12px 24px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 25px;
-            font-size: 15px;
-            transition: transform 0.2s, background-color 0.2s, box-shadow 0.3s;
-            box-sizing: border-box;
-            text-align: center;
-        }
-        .action-btn:hover {
-            transform: scale(1.03);
-        }
-
-        /* 公式Xリンクボタン */
-        #x-main-link {
             background-color: #000;
             color: #fff;
+            font-weight: bold;
+            text-decoration: none;
             border: 2px solid #e91e63;
+            border-radius: 25px;
+            font-size: 16px;
             box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+            transition: transform 0.2s, background-color 0.2s, border-color 0.3s, box-shadow 0.3s;
         }
-
-        /* シェアボタン */
-        #x-share-btn {
-            background-color: #1da1f2;
-            color: #fff;
-            border: 2px solid #1da1f2;
-            box-shadow: 0 4px 15px rgba(29, 161, 242, 0.4);
-        }
-        #x-share-btn:hover {
-            background-color: #0c85d0;
+        .x-main-btn:hover {
+            transform: scale(1.05);
+            background-color: #222;
         }
 
         /* 共通ボックス */
@@ -201,7 +160,6 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
         }
 
         .member-badge {
@@ -214,22 +172,6 @@
 
         .member-name {
             font-weight: bold;
-        }
-
-        .birthday-tag {
-            font-size: 11px;
-            background: #ff4081;
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-            100% { transform: scale(1); }
         }
 
         .x-sub-link {
@@ -285,28 +227,35 @@
             font-family: 'Courier New', monospace;
             font-size: 13px;
         }
+        
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #888; }
     </style>
 </head>
 <body>
 
-    <h1>SUPER☆GiRLS 第7章時計</h1>
+    <h1>SUPER☆GiRLS 第7章</h1>
 
     <div id="clock-box">
         <div id="date-display">現在時刻を取得中...</div>
+        <div id="birthday-display"></div>
         <div id="time-display">--:--:--</div>
-    </div>
-
-    <div id="since-target-box">
-        📅 2026年9月13日まであと: <span id="since-target-info">計算中...</span>
-    </div>
-
-    <div id="rarest-box">
-        ⏳ 最も出ていないメンバー: <span id="rarest-info">計算中...</span>
     </div>
 
     <div>
         <span id="live-spinning">ガチャ回転中: リール抽選中...</span>
     </div>
+
+    <div id="longest-absent"></div>
 
     <div id="win-container">
         <div id="display">ガチャ起動中...（リールが揃うのを待っています）</div>
@@ -314,12 +263,9 @@
     
     <div id="win-time-display"></div>
 
-    <div id="action-btn-container">
-        <a id="x-main-link" class="action-btn" href="" target="_blank" rel="noopener noreferrer">
+    <div id="x-link-container">
+        <a id="x-main-link" class="x-main-btn" href="" target="_blank" rel="noopener noreferrer">
             🔗 メンバーの公式Xを見る ↗
-        </a>
-        <a id="x-share-btn" class="action-btn" href="" target="_blank" rel="noopener noreferrer">
-            💬 この結果を X でシェアする ↗
         </a>
     </div>
 
@@ -331,8 +277,10 @@
     <div class="box">
         <h3>📜 当選履歴（直近50件）</h3>
         <div id="history-list"></div>
+        <button onclick="resetAll()">すべてリセット</button>
     </div>
 
+    <!-- Firebase SDKの読み込み（Module形式） -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -351,13 +299,6 @@
         const db = getDatabase(app);
 
         const members = ["門林有羽", "竹内ななみ", "鎌田彩樺", "柏綾菜", "河村果歩", "櫻井穂夏", "浜田萌帆", "二宮伶寧"];
-
-        // 各リールの文字リスト
-        const reel1 = ["門", "竹", "鎌", "柏", "河", "櫻", "浜", "二"];
-        const reel2 = ["林", "内", "田", "綾", "村", "井", "宮", "田"];
-        const reel3 = ["有", "な", "彩", "菜", "果", "穂", "萌", "伶"];
-        const reel4 = ["羽", "な", "樺", "歩", "夏", "帆", "寧"];
-        const reel5 = ["み"];
 
         const memberColors = {
             "浜田萌帆": "#ff69b4",
@@ -382,25 +323,32 @@
         };
 
         const memberBirthdays = {
-            "門林有羽": { month: 10, day: 28 },
-            "竹内ななみ": { month: 10, day: 2 },
-            "鎌田彩樺": { month: 4, day: 29 },
-            "柏綾菜": { month: 7, day: 20 },
-            "河村果歩": { month: 6, day: 17 },
-            "櫻井穂夏": { month: 7, day: 6 },
-            "浜田萌帆": { month: 10, day: 29 },
-            "二宮伶寧": { month: 9, day: 16 }
+            "門林有羽": "10/28",
+            "竹内ななみ": "10/02",
+            "鎌田彩樺": "04/29",
+            "柏綾菜": "07/20",
+            "河村果歩": "06/17",
+            "櫻井穂夏": "07/06",
+            "浜田萌帆": "10/29",
+            "二宮伶寧": "09/16"
         };
 
+        const reel1 = ["門", "竹", "鎌", "柏", "河", "櫻", "浜", "二"];
+        const reel2 = ["林", "内", "田", "綾", "村", "井", "宮", "田"];
+        const reel3 = ["有", "な", "彩", "菜", "果", "穂", "萌", "伶"];
+        const reel4 = ["羽", "な", "樺", "歩", "夏", "帆", "寧"];
+        const reel5 = ["み"];
+
         let counts = {};
-        members.forEach(m => { counts[m] = 0; });
         let history = [];
         let lastWinner = "";
         let lastWinTime = "";
-        let lastHitTimestamps = {};
+        let lastWinTimestamps = {};
 
-        // サーバーから最新データを常時受け取る
-        onValue(ref(db, 'gacha_state'), (snapshot) => {
+        members.forEach(m => { counts[m] = 0; });
+
+        // Firebaseからリアルタイムでデータを同期・取得
+        onValue(ref(db, 'gacha_state_v28'), (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 if (data.counts) {
@@ -411,38 +359,113 @@
                 history = data.history || [];
                 lastWinner = data.lastWinner || "";
                 lastWinTime = data.lastWinTime || "";
-                lastHitTimestamps = data.lastHitTimestamps || {};
+                lastWinTimestamps = data.lastWinTimestamps || {};
 
                 if (lastWinner && members.includes(lastWinner)) {
                     showWinnerDisplay(lastWinner, lastWinTime);
                 }
                 render();
+                updateLongestAbsent();
             }
         });
 
-        function render() {
+        function updateClock() {
             const now = new Date();
-            const currentMonth = now.getMonth() + 1;
-            const currentDate = now.getDate();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const day = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+            document.getElementById('date-display').innerText = `${y}年${m}月${d}日 (${day})`;
 
+            const todayBirthday = Object.entries(memberBirthdays)
+                .filter(([name, md]) => md === `${m}/${d}`)
+                .map(([name]) => name);
+            document.getElementById('birthday-display').innerText =
+                todayBirthday.length ? `🎂 Happy Birthday ${todayBirthday.join(' & ')}` : '';
+
+            updateLongestAbsent();
+
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('time-display').innerText = `${hh}:${mm}:${ss}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function showWinnerDisplay(name, timeString) {
+            const displayEl = document.getElementById("display");
+
+            displayEl.innerText = `🎉 当たり！！【 ${name} 】`;
+            displayEl.style.color = memberColors[name] || "#ff4081";
+
+            if (timeString) {
+                let timeEl = document.getElementById("win-time-display");
+                timeEl.innerText = `当選時刻: ${timeString}`;
+                timeEl.style.display = "block";
+            }
+
+            if (memberXUrls[name]) {
+                const xLinkEl = document.getElementById("x-main-link");
+                xLinkEl.href = memberXUrls[name];
+                xLinkEl.innerText = `🔗 ${name} の公式Xを見る ↗`;
+                xLinkEl.style.borderColor = memberColors[name] || "#e91e63";
+                xLinkEl.style.boxShadow = `0 4px 15px ${memberColors[name]}66`;
+                document.getElementById("x-link-container").style.display = "block";
+            }
+        }
+
+        function formatElapsed(ms) {
+            const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${days}日 ${hours}時間 ${minutes}分 ${seconds}秒`;
+        }
+
+        function updateLongestAbsent() {
+            const now = Date.now();
+            let target = null;
+            let longestMs = -1;
+
+            members.forEach(name => {
+                const ts = lastWinTimestamps[name];
+                if (ts) {
+                    const elapsed = now - ts;
+                    if (elapsed > longestMs) {
+                        longestMs = elapsed;
+                        target = name;
+                    }
+                }
+            });
+
+            const el = document.getElementById('longest-absent');
+            if (!el) return;
+
+            if (!target) {
+                el.innerText = '⏳ 一番出ていないメンバー：まだ当選記録がありません';
+                el.style.color = '#ddd';
+                return;
+            }
+
+            el.innerText = `⏳ 一番出ていないメンバー：${target}（${formatElapsed(longestMs)}ぶり）`;
+            el.style.color = memberColors[target] || '#ddd';
+        }
+
+        function render() {
             let html = "";
             members.forEach(m => {
                 let xUrl = memberXUrls[m] || "#";
                 let color = memberColors[m] || "#ffffff";
-                
-                let birthdayObj = memberBirthdays[m];
-                let isBirthday = (birthdayObj && birthdayObj.month === currentMonth && birthdayObj.day === currentDate);
-                let birthdayHtml = isBirthday ? `<span class="birthday-tag">🎂 Happy Birthday ${m}</span>` : "";
-
                 html += `
                     <div class="row">
                         <div class="member-info">
                             <span class="member-badge" style="background-color: ${color};"></span>
                             <span class="member-name" style="color: ${color};">${m}</span>
-                            ${birthdayHtml}
                             <a href="${xUrl}" target="_blank" rel="noopener noreferrer" class="x-sub-link">X ↗</a>
                         </div>
-                        <span class="count-num">${counts[m] !== undefined ? counts[m] : 0} 回</span>
+                        <span class="count-num">${counts[m] || 0} 回</span>
                     </div>
                 `;
             });
@@ -468,135 +491,6 @@
             document.getElementById("history-list").innerHTML = historyHtml;
         }
 
-        function showWinnerDisplay(name, timeString) {
-            const displayEl = document.getElementById("display");
-
-            displayEl.innerText = `🎉 当たり！！【 ${name} 】`;
-            displayEl.style.color = memberColors[name] || "#ff4081";
-
-            if (timeString) {
-                let timeEl = document.getElementById("win-time-display");
-                timeEl.innerText = `当選時刻: ${timeString}`;
-                timeEl.style.display = "block";
-            }
-
-            if (memberXUrls[name]) {
-                const xLinkEl = document.getElementById("x-main-link");
-                xLinkEl.href = memberXUrls[name];
-                xLinkEl.innerText = `🔗 ${name} の公式Xを見る ↗`;
-                xLinkEl.style.borderColor = memberColors[name] || "#e91e63";
-                xLinkEl.style.boxShadow = `0 4px 15px ${memberColors[name]}66`;
-            }
-
-            let hitTime = lastHitTimestamps[name];
-            let elapsedStr = "";
-            if (hitTime) {
-                let diffMs = Date.now() - hitTime;
-                let diffSec = Math.floor(diffMs / 1000);
-                let days = Math.floor(diffSec / (3600 * 24));
-                let hours = Math.floor((diffSec % (3600 * 24)) / 3600);
-                let minutes = Math.floor((diffSec % 3600) / 60);
-                let seconds = diffSec % 60;
-
-                if (days > 0) elapsedStr += `${days}日`;
-                if (days > 0 || hours > 0) elapsedStr += `${hours}時間`;
-                if (days > 0 || hours > 0 || minutes > 0) elapsedStr += `${minutes}分`;
-                elapsedStr += `${seconds}秒ぶり`;
-            }
-
-            let shareText = `SUPER☆GiRLS 第7章 ガチャ結果✨\n\n🎉 【 ${name} 】が当たりました！`;
-            if (elapsedStr) {
-                shareText += `\n（前回から ${elapsedStr}）`;
-            }
-            shareText += `\n\n#スパガ #SUPERGiRLS`;
-
-            const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-            document.getElementById("x-share-btn").href = shareUrl;
-
-            document.getElementById("action-btn-container").style.display = "flex";
-        }
-
-        function updateClock() {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const d = String(now.getDate()).padStart(2, '0');
-            const day = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
-            document.getElementById('date-display').innerText = `${y}年${m}月${d}日 (${day})`;
-
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('time-display').innerText = `${hh}:${mm}:${ss}`;
-
-            updateSinceTargetDisplay(now.getTime());
-            updateRarestDisplay(now.getTime());
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        function updateSinceTargetDisplay(currentTimestamp) {
-            const targetTime = new Date(2026, 8, 13, 0, 0, 0).getTime();
-            let diffMs = targetTime - currentTimestamp;
-            const sinceTargetEl = document.getElementById("since-target-info");
-
-            if (diffMs <= 0) {
-                sinceTargetEl.innerText = "2026年9月13日を迎えました！";
-                return;
-            }
-
-            const diffSec = Math.floor(diffMs / 1000);
-            const days = Math.floor(diffSec / (3600 * 24));
-            const hours = Math.floor((diffSec % (3600 * 24)) / 3600);
-            const minutes = Math.floor((diffSec % 3600) / 60);
-            const seconds = diffSec % 60;
-
-            sinceTargetEl.innerHTML = `<span style="color:#ff4081">${days}日</span> ${hours}時間 ${minutes}分 ${seconds}秒`;
-        }
-
-        function updateRarestDisplay(currentTimestamp) {
-            let rarestMember = null;
-            let oldestTime = Infinity;
-
-            members.forEach(m => {
-                let hitTime = lastHitTimestamps[m];
-                if (hitTime === undefined) hitTime = 0;
-                if (hitTime < oldestTime) {
-                    oldestTime = hitTime;
-                    rarestMember = m;
-                }
-            });
-
-            const rarestInfoEl = document.getElementById("rarest-info");
-            if (!rarestMember) {
-                rarestInfoEl.innerText = "データなし";
-                return;
-            }
-
-            if (oldestTime === 0) {
-                rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span>（まだ一度も出ていません）`;
-                return;
-            }
-
-            let diffMs = currentTimestamp - oldestTime;
-            if (diffMs < 0) diffMs = 0;
-
-            const diffSec = Math.floor(diffMs / 1000);
-            const days = Math.floor(diffSec / (3600 * 24));
-            const hours = Math.floor((diffSec % (3600 * 24)) / 3600);
-            const minutes = Math.floor((diffSec % 3600) / 60);
-            const seconds = diffSec % 60;
-
-            let timeStr = "";
-            if (days > 0) timeStr += `${days}日`;
-            if (days > 0 || hours > 0) timeStr += `${hours}時間`;
-            if (days > 0 || hours > 0 || minutes > 0) timeStr += `${minutes}分`;
-            timeStr += `${seconds}秒`;
-
-            rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span> ―― 最後に当たってから <span style="color:#ff4081">${timeStr}</span> ぶり`;
-        }
-
-        // 1秒に1回、リールをシャッフルして名前がピタッと完成したときだけ当たりにするループ処理
         function loop() {
             const r1 = reel1[Math.floor(Math.random() * reel1.length)];
             const r2 = reel2[Math.floor(Math.random() * reel2.length)];
@@ -607,7 +501,6 @@
             const combinedName = r1 + r2 + r3 + r4 + r5;
             document.getElementById("live-spinning").innerText = `ガチャ回転中: [ ${r1} | ${r2} | ${r3} | ${r4} | ${r5} ]`;
 
-            // 出来上がった文字列が正式なメンバー名に一致しているかチェック
             if (members.includes(combinedName)) {
                 const name = combinedName;
                 const now = new Date();
@@ -616,26 +509,58 @@
                 const ss = String(now.getSeconds()).padStart(2, '0');
                 const timeString = `${hh}:${mm}:${ss}`;
 
+                showWinnerDisplay(name, timeString);
+
                 counts[name] = (counts[name] || 0) + 1;
                 lastWinner = name;
                 lastWinTime = timeString;
-                lastHitTimestamps[name] = now.getTime();
+                lastWinTimestamps[name] = now.getTime();
 
                 history.unshift({ name: name, time: timeString });
-                if (history.length > 50) history.pop();
-
-                set(ref(db, 'gacha_state'), {
+                if (history.length > 50) {
+                    history.pop();
+                }
+                
+                // Firebaseへデータを保存（自動で全クライアントに同期されます）
+                set(ref(db, 'gacha_state_v28'), {
                     counts: counts,
                     history: history,
                     lastWinner: lastWinner,
                     lastWinTime: lastWinTime,
-                    lastHitTimestamps: lastHitTimestamps
+                    lastWinTimestamps: lastWinTimestamps
                 });
             }
         }
 
-        // 1秒ごとに実行
-        setInterval(loop, 1000);
+        window.resetAll = function() {
+            if (confirm("カウントと履歴をすべてリセットしますか？")) {
+                members.forEach(m => counts[m] = 0);
+                history = [];
+                lastWinner = "";
+                lastWinTime = "";
+                lastWinTimestamps = {};
+                
+                set(ref(db, 'gacha_state_v28'), {
+                    counts: counts,
+                    history: history,
+                    lastWinner: lastWinner,
+                    lastWinTime: lastWinTime,
+                    lastWinTimestamps: lastWinTimestamps
+                });
+
+                document.getElementById("x-link-container").style.display = "none";
+                document.getElementById("win-time-display").style.display = "none";
+                
+                const displayEl = document.getElementById("display");
+                displayEl.innerText = "ガチャ起動中...（リールが揃うのを待っています）";
+                displayEl.style.color = "#ff4081";
+                
+                render();
+                updateLongestAbsent();
+            }
+        }
+
+        setInterval(loop, 100);
     </script>
 </body>
 </html>
