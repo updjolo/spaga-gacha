@@ -393,6 +393,27 @@
         let lastWinTime = "";
         let lastHitTimestamps = {};
 
+        // サーバーから最新データを常時受け取る
+        onValue(ref(db, 'gacha_state'), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.counts) {
+                    members.forEach(m => {
+                        counts[m] = data.counts[m] !== undefined ? data.counts[m] : 0;
+                    });
+                }
+                history = data.history || [];
+                lastWinner = data.lastWinner || "";
+                lastWinTime = data.lastWinTime || "";
+                lastHitTimestamps = data.lastHitTimestamps || {};
+
+                if (lastWinner && members.includes(lastWinner)) {
+                    showWinnerDisplay(lastWinner, lastWinTime);
+                }
+                render();
+            }
+        });
+
         function render() {
             const now = new Date();
             const currentMonth = now.getMonth() + 1;
@@ -489,28 +510,6 @@
             document.getElementById("action-btn-container").style.display = "flex";
         }
 
-        render();
-
-        onValue(ref(db, 'gacha_state'), (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                if (data.counts) {
-                    members.forEach(m => {
-                        counts[m] = data.counts[m] !== undefined ? data.counts[m] : 0;
-                    });
-                }
-                history = data.history || [];
-                lastWinner = data.lastWinner || "";
-                lastWinTime = data.lastWinTime || "";
-                lastHitTimestamps = data.lastHitTimestamps || {};
-
-                if (lastWinner && members.includes(lastWinner)) {
-                    showWinnerDisplay(lastWinner, lastWinTime);
-                }
-                render();
-            }
-        });
-
         function updateClock() {
             const now = new Date();
             const y = now.getFullYear();
@@ -591,7 +590,7 @@
             rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span> ―― 最後に当たってから <span style="color:#ff4081">${timeStr}</span> ぶり`;
         }
 
-        // 自動でサクサク回るガチャ処理
+        // 1秒に1回自動でガチャを回すループ処理
         function loop() {
             const name = members[Math.floor(Math.random() * members.length)];
 
@@ -611,6 +610,7 @@
             history.unshift({ name: name, time: timeString });
             if (history.length > 50) history.pop();
 
+            // Firebaseにデータを保存（1秒に1回）
             set(ref(db, 'gacha_state'), {
                 counts: counts,
                 history: history,
@@ -620,8 +620,8 @@
             });
         }
 
-        // 2秒ごとに自動で回す
-        setInterval(loop, 2000);
+        // 1000ミリ秒（1秒）ごとに実行
+        setInterval(loop, 1000);
     </script>
 </body>
 </html>
