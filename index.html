@@ -386,13 +386,6 @@
             "二宮伶寧": { month: 9, day: 16 }
         };
 
-        const reel1 = ["門", "竹", "鎌", "柏", "河", "櫻", "浜", "二"];
-        const reel2 = ["林", "内", "田", "綾", "村", "井", "宮"];
-        const reel3 = ["有", "な", "彩", "菜", "果", "穂", "萌", "伶"];
-        const reel4 = ["羽", "な", "樺", "歩", "夏", "帆", "寧"];
-        const reel5 = ["み"];
-
-        // 初期値を設定（データが空でも必ず0回で表示されるようにする）
         let counts = {};
         members.forEach(m => { counts[m] = 0; });
         let history = [];
@@ -400,7 +393,6 @@
         let lastWinTime = "";
         let lastHitTimestamps = {};
 
-        // 画面描画用関数
         function render() {
             const now = new Date();
             const currentMonth = now.getMonth() + 1;
@@ -497,10 +489,8 @@
             document.getElementById("action-btn-container").style.display = "flex";
         }
 
-        // 初回起動時にローカルのカウンターを即座に描画
         render();
 
-        // Firebaseからリアルタイムでデータを同期受け取り
         onValue(ref(db, 'gacha_state'), (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -521,7 +511,6 @@
             }
         });
 
-        // 時計とカウントダウンの更新
         function updateClock() {
             const now = new Date();
             const y = now.getFullYear();
@@ -602,54 +591,37 @@
             rarestInfoEl.innerHTML = `<span style="color:${memberColors[rarestMember]}">${rarestMember}</span> ―― 最後に当たってから <span style="color:#ff4081">${timeStr}</span> ぶり`;
         }
 
-        function getRandomLength() {
-            const rand = Math.random();
-            if (rand < 1/8) return 3;
-            else if (rand < 7/8) return 4;
-            else return 5;
-        }
-
-        // ガチャを回す処理
+        // 自動でサクサク回るガチャ処理
         function loop() {
-            const len = getRandomLength();
-            let name = "";
-
-            name += reel1[Math.floor(Math.random() * reel1.length)];
-            name += reel2[Math.floor(Math.random() * reel2.length)];
-            name += reel3[Math.floor(Math.random() * reel3.length)];
-
-            if (len >= 4) name += reel4[Math.floor(Math.random() * reel4.length)];
-            if (len === 5) name += reel5[Math.floor(Math.random() * reel5.length)];
+            const name = members[Math.floor(Math.random() * members.length)];
 
             document.getElementById("live-spinning").innerText = `ガチャ回転中: ${name}`;
 
-            if (members.includes(name)) {
-                const now = new Date();
-                const hh = String(now.getHours()).padStart(2, '0');
-                const mm = String(now.getMinutes()).padStart(2, '0');
-                const ss = String(now.getSeconds()).padStart(2, '0');
-                const timeString = `${hh}:${mm}:${ss}`;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            const timeString = `${hh}:${mm}:${ss}`;
 
-                counts[name] = (counts[name] || 0) + 1;
-                lastWinner = name;
-                lastWinTime = timeString;
-                lastHitTimestamps[name] = now.getTime();
+            counts[name] = (counts[name] || 0) + 1;
+            lastWinner = name;
+            lastWinTime = timeString;
+            lastHitTimestamps[name] = now.getTime();
 
-                history.unshift({ name: name, time: timeString });
-                if (history.length > 50) history.pop();
+            history.unshift({ name: name, time: timeString });
+            if (history.length > 50) history.pop();
 
-                // Firebaseに最新状態を保存
-                set(ref(db, 'gacha_state'), {
-                    counts: counts,
-                    history: history,
-                    lastWinner: lastWinner,
-                    lastWinTime: lastWinTime,
-                    lastHitTimestamps: lastHitTimestamps
-                });
-            }
+            set(ref(db, 'gacha_state'), {
+                counts: counts,
+                history: history,
+                lastWinner: lastWinner,
+                lastWinTime: lastWinTime,
+                lastHitTimestamps: lastHitTimestamps
+            });
         }
 
-        setInterval(loop, 50);
+        // 2秒ごとに自動で回す
+        setInterval(loop, 2000);
     </script>
 </body>
 </html>
