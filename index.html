@@ -86,7 +86,7 @@
             color: #fff;
         }
 
-        /* リアルタイムモニター */
+        /* リアルタイムモニター（完全同期） */
         #live-spinning {
             font-size: 14px;
             color: #bbb;
@@ -338,7 +338,7 @@
     </div>
 
     <script>
-        // --- Firebase の初期設定（ご自身のプロジェクト情報に書き換えてください） ---
+        // --- Firebase の初期設定 ---
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -409,6 +409,11 @@
                 lastWinTime = data.lastWinTime || "";
                 lastHitTimestamps = data.lastHitTimestamps || {};
 
+                // 回転中の文字（spinningText）も同期して画面に反映
+                if (data.spinningText) {
+                    document.getElementById("live-spinning").innerText = `ガチャ回転中: ${data.spinningText}`;
+                }
+
                 members.forEach(m => { if (counts[m] === undefined) counts[m] = 0; });
 
                 if (lastWinner && members.includes(lastWinner)) {
@@ -416,19 +421,19 @@
                 }
                 render();
             } else {
-                // 初期データが存在しない場合は作成
                 saveDataToFirebase();
             }
         });
 
-        function saveDataToFirebase() {
+        function saveDataToFirebase(extraData = {}) {
             db.collection("gachaData").doc("mainState").set({
                 counts: counts,
                 history: history,
                 lastWinner: lastWinner,
                 lastWinTime: lastWinTime,
-                lastHitTimestamps: lastHitTimestamps
-            }).catch((error) => {
+                lastHitTimestamps: lastHitTimestamps,
+                ...extraData
+            }, { merge: true }).catch((error) => {
                 console.error("Firebase保存エラー: ", error);
             });
         }
@@ -634,8 +639,7 @@
                 name += reel5[Math.floor(Math.random() * reel5.length)];
             }
 
-            document.getElementById("live-spinning").innerText = `ガチャ回転中: ${name}`;
-
+            // 当たった時、または回転中の文字をFirebaseに書き込んで全員に同期させる
             if (members.includes(name)) {
                 const now = new Date();
                 const hh = String(now.getHours()).padStart(2, '0');
@@ -653,11 +657,13 @@
                     history.pop();
                 }
 
-                saveDataToFirebase();
+                saveDataToFirebase({ spinningText: name });
+            } else {
+                saveDataToFirebase({ spinningText: name });
             }
         }
 
-        // 10秒に1回（10000ミリ秒）に変更
+        // 10秒に1回実行
         setInterval(loop, 10000);
     </script>
 </body>
