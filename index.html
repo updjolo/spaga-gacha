@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>SUPER☆GiRLS 第7章</title>
+    <!-- Firebase SDK (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -93,7 +94,7 @@
             background: rgba(0, 0, 0, 0.6);
             padding: 5px 15px;
             border-radius: 20px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: inline-block;
             font-family: 'Courier New', monospace;
             border: 1px dashed #777;
@@ -153,7 +154,6 @@
             transform: scale(1.03);
         }
 
-        /* 公式Xリンクボタン */
         #x-main-link {
             background-color: #000;
             color: #fff;
@@ -161,7 +161,6 @@
             box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
         }
 
-        /* シェアボタン */
         #x-share-btn {
             background-color: #1da1f2;
             color: #fff;
@@ -309,7 +308,7 @@
     </div>
 
     <div>
-        <span id="live-spinning">ガチャ回転中: 抽出中...</span>
+        <span id="live-spinning">サーバー接続中...</span>
     </div>
 
     <div id="win-container">
@@ -338,7 +337,7 @@
     </div>
 
     <script>
-        // --- Firebase の初期設定 ---
+        // --- Firebase の初期設定（ご自身のプロジェクト情報に書き換えてください） ---
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -385,12 +384,6 @@
             "二宮伶寧": { month: 9, day: 16 }
         };
 
-        const reel1 = ["門", "竹", "鎌", "柏", "河", "櫻", "浜", "二"];
-        const reel2 = ["林", "内", "田", "綾", "村", "井", "宮", "田"];
-        const reel3 = ["有", "な", "彩", "菜", "果", "穂", "萌", "伶"];
-        const reel4 = ["羽", "な", "樺", "歩", "夏", "帆", "寧"];
-        const reel5 = ["み"];
-
         let counts = {};
         let history = [];
         let lastWinner = "";
@@ -399,7 +392,7 @@
 
         members.forEach(m => { counts[m] = 0; });
 
-        // --- Firebase からリアルタイムでデータを受け取る ---
+        // --- Firebase からサーバーの最新データを受け取って画面に反映する ---
         db.collection("gachaData").doc("mainState").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
@@ -409,7 +402,7 @@
                 lastWinTime = data.lastWinTime || "";
                 lastHitTimestamps = data.lastHitTimestamps || {};
 
-                // 回転中の文字（spinningText）も同期して画面に反映
+                // サーバー側で回しているガチャの文字をリアルタイム表示
                 if (data.spinningText) {
                     document.getElementById("live-spinning").innerText = `ガチャ回転中: ${data.spinningText}`;
                 }
@@ -420,23 +413,8 @@
                     showWinnerDisplay(lastWinner, lastWinTime);
                 }
                 render();
-            } else {
-                saveDataToFirebase();
             }
         });
-
-        function saveDataToFirebase(extraData = {}) {
-            db.collection("gachaData").doc("mainState").set({
-                counts: counts,
-                history: history,
-                lastWinner: lastWinner,
-                lastWinTime: lastWinTime,
-                lastHitTimestamps: lastHitTimestamps,
-                ...extraData
-            }, { merge: true }).catch((error) => {
-                console.error("Firebase保存エラー: ", error);
-            });
-        }
 
         function updateClock() {
             const now = new Date();
@@ -483,9 +461,7 @@
 
             members.forEach(m => {
                 let hitTime = lastHitTimestamps[m];
-                if (hitTime === undefined) {
-                    hitTime = 0;
-                }
+                if (hitTime === undefined) hitTime = 0;
                 if (hitTime < oldestTime) {
                     oldestTime = hitTime;
                     rarestMember = m;
@@ -616,55 +592,6 @@
             }
             document.getElementById("history-list").innerHTML = historyHtml;
         }
-
-        function getRandomLength() {
-            const rand = Math.random();
-            if (rand < 1/8) return 3;
-            else if (rand < 7/8) return 4;
-            else return 5;
-        }
-
-        function loop() {
-            const len = getRandomLength();
-            let name = "";
-
-            name += reel1[Math.floor(Math.random() * reel1.length)];
-            name += reel2[Math.floor(Math.random() * reel2.length)];
-            name += reel3[Math.floor(Math.random() * reel3.length)];
-
-            if (len >= 4) {
-                name += reel4[Math.floor(Math.random() * reel4.length)];
-            }
-            if (len === 5) {
-                name += reel5[Math.floor(Math.random() * reel5.length)];
-            }
-
-            // 当たった時、または回転中の文字をFirebaseに書き込んで全員に同期させる
-            if (members.includes(name)) {
-                const now = new Date();
-                const hh = String(now.getHours()).padStart(2, '0');
-                const mm = String(now.getMinutes()).padStart(2, '0');
-                const ss = String(now.getSeconds()).padStart(2, '0');
-                const timeString = `${hh}:${mm}:${ss}`;
-
-                counts[name] = (counts[name] || 0) + 1;
-                lastWinner = name;
-                lastWinTime = timeString;
-                lastHitTimestamps[name] = now.getTime();
-
-                history.unshift({ name: name, time: timeString });
-                if (history.length > 50) {
-                    history.pop();
-                }
-
-                saveDataToFirebase({ spinningText: name });
-            } else {
-                saveDataToFirebase({ spinningText: name });
-            }
-        }
-
-        // 10秒に1回実行
-        setInterval(loop, 10000);
     </script>
 </body>
 </html>
