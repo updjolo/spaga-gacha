@@ -336,7 +336,7 @@
     <!-- Firebase SDKの読み込み -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCurJ0xKJLE-Z9GGEWcN-R3f5aAmX0FWmI",
@@ -392,13 +392,13 @@
         const reel4 = ["羽", "な", "樺", "歩", "夏", "帆", "寧"];
         const reel5 = ["み"];
 
+        // 初期値を設定（データが空でも必ず0回で表示されるようにする）
         let counts = {};
+        members.forEach(m => { counts[m] = 0; });
         let history = [];
         let lastWinner = "";
         let lastWinTime = "";
         let lastHitTimestamps = {};
-
-        members.forEach(m => { counts[m] = 0; });
 
         // 画面描画用関数
         function render() {
@@ -423,7 +423,7 @@
                             ${birthdayHtml}
                             <a href="${xUrl}" target="_blank" rel="noopener noreferrer" class="x-sub-link">X ↗</a>
                         </div>
-                        <span class="count-num">${counts[m] || 0} 回</span>
+                        <span class="count-num">${counts[m] !== undefined ? counts[m] : 0} 回</span>
                     </div>
                 `;
             });
@@ -497,11 +497,18 @@
             document.getElementById("action-btn-container").style.display = "flex";
         }
 
+        // 初回起動時にローカルのカウンターを即座に描画
+        render();
+
         // Firebaseからリアルタイムでデータを同期受け取り
         onValue(ref(db, 'gacha_state'), (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                counts = data.counts || counts;
+                if (data.counts) {
+                    members.forEach(m => {
+                        counts[m] = data.counts[m] !== undefined ? data.counts[m] : 0;
+                    });
+                }
                 history = data.history || [];
                 lastWinner = data.lastWinner || "";
                 lastWinTime = data.lastWinTime || "";
@@ -602,7 +609,7 @@
             else return 5;
         }
 
-        // ガチャを回す処理（誰か1人がページを開いていれば自動で回ってFirebaseに保存され、全員に同期します）
+        // ガチャを回す処理
         function loop() {
             const len = getRandomLength();
             let name = "";
@@ -631,7 +638,7 @@
                 history.unshift({ name: name, time: timeString });
                 if (history.length > 50) history.pop();
 
-                // Firebaseに最新状態を保存（これによりアクセスしている全員の画面が一斉に同期！）
+                // Firebaseに最新状態を保存
                 set(ref(db, 'gacha_state'), {
                     counts: counts,
                     history: history,
