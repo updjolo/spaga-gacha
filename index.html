@@ -3,186 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>SUPER☆GiRLS 第7章</title>
 
-    <!-- Firebase -->
+    <!-- Firebase Realtime Database -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
     <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             text-align: center;
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #1a1a2e,
+                    #16213e,
+                    #0f3460
+                );
+
             color: #eee;
+
             padding: 20px;
             margin: 0;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
             min-height: 100vh;
         }
 
         h1 {
             font-size: 20px;
             color: #ddd;
+
             margin: 0 0 10px 0;
+
             font-weight: normal;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+
+            text-shadow:
+                0 2px 4px rgba(0,0,0,0.8);
         }
 
-        /* 時計 */
+        /* =========================
+           時計
+        ========================= */
+
         #clock-box {
             background: rgba(28,28,28,0.9);
+
             border: 2px solid #e91e63;
+
             border-radius: 15px;
+
             padding: 15px 30px;
-            margin: 0 auto 15px;
-            box-shadow: 0 0 20px rgba(233,30,99,0.4);
+
+            margin-bottom: 15px;
+
+            box-shadow:
+                0 0 20px rgba(233,30,99,0.4);
+
             width: 90%;
             max-width: 500px;
-            box-sizing: border-box;
         }
 
         #date-display {
             font-size: 18px;
+
             color: #ddd;
+
             margin-bottom: 5px;
+        }
+
+        #birthday-display {
+            display: block;
+
+            color: #ff4081;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            margin-top: 5px;
         }
 
         #time-display {
             font-size: 45px;
+
             font-weight: bold;
+
             color: #fff;
+
             font-family: 'Courier New', monospace;
+
             letter-spacing: 2px;
         }
 
-        /* カウントダウン */
+        /* =========================
+           9/13カウントダウン
+        ========================= */
+
         #since-target-box {
             background: rgba(30,144,255,0.15);
+
             border: 1px dashed #1e90ff;
+
             border-radius: 12px;
+
             padding: 10px 15px;
-            margin: 0 auto 15px;
+
+            margin-bottom: 15px;
+
             width: 90%;
             max-width: 500px;
-            box-sizing: border-box;
+
             font-size: 14px;
+
             color: #87cefa;
         }
 
-        /* 最も出ていないメンバー */
+        #since-target-box span {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* =========================
+           最も出ていないメンバー
+        ========================= */
+
         #rarest-box {
             background: rgba(233,30,99,0.15);
+
             border: 1px dashed #e91e63;
+
             border-radius: 12px;
+
             padding: 10px 15px;
-            margin: 0 auto 15px;
+
+            margin-bottom: 15px;
+
             width: 90%;
             max-width: 500px;
-            box-sizing: border-box;
+
             font-size: 14px;
+
             color: #ff80ab;
         }
 
-        /* サーバー・ガチャ表示 */
-        #live-spinning {
-            font-size: 16px;
+        #rarest-box span {
+            font-weight: bold;
             color: #fff;
-            background: rgba(0,0,0,0.65);
-            padding: 8px 20px;
-            border-radius: 20px;
-            margin-bottom: 15px;
-            display: inline-block;
-            font-family: 'Courier New', monospace;
-            border: 1px dashed #777;
-            min-width: 240px;
         }
 
-        /* 当選表示 */
+        /* =========================
+           Firebase接続状態
+        ========================= */
+
+        #connection-box {
+            margin-bottom: 10px;
+        }
+
+        #connection-status {
+            font-size: 14px;
+
+            color: #bbb;
+
+            background: rgba(0,0,0,0.6);
+
+            padding: 7px 15px;
+
+            border-radius: 20px;
+
+            display: inline-block;
+
+            font-family: 'Courier New', monospace;
+
+            border: 1px dashed #777;
+        }
+
+        .connected {
+            color: #4ade80 !important;
+            border-color: #22c55e !important;
+        }
+
+        .disconnected {
+            color: #ff6b6b !important;
+            border-color: #ef4444 !important;
+        }
+
+        /* =========================
+           ガチャ結果
+        ========================= */
+
         #win-container {
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
-            justify-content: center;
+
             margin: 15px 0;
-            min-height: 90px;
+
+            min-height: 110px;
+
+            justify-content: center;
+
+            width: 100%;
         }
 
         #display {
             font-size: 32px;
+
             font-weight: bold;
+
             color: #ff4081;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.9);
+
+            text-shadow:
+                0 2px 5px rgba(0,0,0,0.9);
+
             letter-spacing: 3px;
+
+            transition:
+                color 0.3s ease,
+                transform 0.3s ease;
         }
+
+        .hit-animation {
+            animation: hitPulse 0.5s ease;
+        }
+
+        .miss-animation {
+            animation: missPulse 0.4s ease;
+        }
+
+        @keyframes hitPulse {
+
+            0% {
+                transform: scale(0.8);
+            }
+
+            60% {
+                transform: scale(1.12);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes missPulse {
+
+            0% {
+                opacity: 0.4;
+                transform: scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* =========================
+           当選時刻
+        ========================= */
 
         #win-time-display {
             font-size: 15px;
+
             color: #ddd;
+
             margin-bottom: 10px;
+
+            text-shadow:
+                0 1px 3px rgba(0,0,0,0.9);
+
             display: none;
         }
 
-        /* Xボタン */
+        /* =========================
+           ボタン
+        ========================= */
+
         #action-btn-container {
             display: none;
+
             flex-direction: column;
+
             gap: 12px;
+
             margin: 15px auto;
+
             width: 90%;
+
             max-width: 500px;
         }
 
         .action-btn {
             display: block;
+
             padding: 12px 24px;
+
             font-weight: bold;
+
             text-decoration: none;
+
             border-radius: 25px;
+
             font-size: 15px;
-            box-sizing: border-box;
+
+            transition:
+                transform 0.2s,
+                background-color 0.2s,
+                box-shadow 0.3s;
+
             text-align: center;
         }
 
+        .action-btn:hover {
+            transform: scale(1.03);
+        }
+
         #x-main-link {
-            background: #000;
+            background-color: #000;
+
             color: #fff;
+
             border: 2px solid #e91e63;
+
+            box-shadow:
+                0 4px 15px rgba(233,30,99,0.4);
         }
 
         #x-share-btn {
-            background: #1da1f2;
+            background-color: #1da1f2;
+
             color: #fff;
+
             border: 2px solid #1da1f2;
+
+            box-shadow:
+                0 4px 15px rgba(29,161,242,0.4);
         }
 
-        /* 共通ボックス */
+        #x-share-btn:hover {
+            background-color: #0c85d0;
+        }
+
+        /* =========================
+           共通ボックス
+        ========================= */
+
         .box {
             width: 90%;
+
             max-width: 500px;
+
             margin: 15px auto;
+
             background: rgba(28,28,28,0.9);
+
             padding: 20px;
+
             border-radius: 15px;
+
             text-align: left;
+
             border: 1px solid #555;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.7);
-            box-sizing: border-box;
+
+            box-shadow:
+                0 4px 15px rgba(0,0,0,0.7);
         }
 
         .box h3 {
             margin-top: 0;
+
             font-size: 18px;
+
             color: #e91e63;
+
             border-bottom: 2px solid #555;
+
             padding-bottom: 8px;
         }
 
+        /* =========================
+           メンバー一覧
+        ========================= */
+
         .row {
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             padding: 10px 0;
+
             border-bottom: 1px solid #444;
+
             font-size: 16px;
         }
 
@@ -192,16 +418,25 @@
 
         .member-info {
             display: flex;
+
             align-items: center;
-            gap: 10px;
+
+            gap: 12px;
+
             flex-wrap: wrap;
         }
 
         .member-badge {
             width: 14px;
+
             height: 14px;
+
             border-radius: 50%;
+
             display: inline-block;
+
+            box-shadow:
+                0 0 6px rgba(255,255,255,0.3);
         }
 
         .member-name {
@@ -210,151 +445,300 @@
 
         .birthday-tag {
             font-size: 11px;
+
             background: #ff4081;
+
             color: #fff;
+
             padding: 2px 6px;
+
             border-radius: 10px;
+
             font-weight: bold;
+
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.08);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         .x-sub-link {
             color: #1da1f2;
+
             text-decoration: none;
+
             font-size: 12px;
+
             border: 1px solid #1da1f2;
+
             padding: 2px 8px;
+
             border-radius: 12px;
+
+            transition: all 0.2s;
+        }
+
+        .x-sub-link:hover {
+            background-color: #1da1f2;
+
+            color: #fff;
         }
 
         .count-num {
             color: #e91e63;
+
             font-weight: bold;
+
             font-size: 18px;
         }
 
+        /* =========================
+           履歴
+        ========================= */
+
         #history-list {
-            max-height: 220px;
+            max-height: 300px;
+
             overflow-y: auto;
+
             font-size: 14px;
         }
 
         .history-row {
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             padding: 6px 4px;
+
             border-bottom: 1px dashed #444;
+
+            color: #ccc;
+        }
+
+        .history-row:last-child {
+            border-bottom: none;
         }
 
         .history-member {
             display: flex;
+
             align-items: center;
+
             gap: 8px;
         }
 
         .history-badge {
             width: 10px;
+
             height: 10px;
+
             border-radius: 50%;
+
+            display: inline-block;
         }
 
         .history-time {
             color: #aaa;
+
             font-family: 'Courier New', monospace;
+
             font-size: 13px;
         }
+
     </style>
 </head>
 
 <body>
 
-<h1>SUPER☆GiRLS 第7章</h1>
+    <h1>SUPER☆GiRLS 第7章</h1>
 
-<div id="clock-box">
-    <div id="date-display">現在時刻を取得中...</div>
-    <div id="time-display">--:--:--</div>
-</div>
+    <!-- 時計 -->
 
-<div id="since-target-box">
-    📅 2026年9月13日まであと:
-    <span id="since-target-info">計算中...</span>
-</div>
+    <div id="clock-box">
 
-<div id="rarest-box">
-    ⏳ 最も出ていないメンバー:
-    <span id="rarest-info">計算中...</span>
-</div>
+        <div id="date-display">
+            現在時刻を取得中...
+        </div>
 
-<div>
-    <span id="live-spinning">サーバー接続中...</span>
-</div>
+        <div id="birthday-display"></div>
 
-<div id="win-container">
-    <div id="display">ガチャ起動中...</div>
-</div>
+        <div id="time-display">
+            --:--:--
+        </div>
 
-<div id="win-time-display"></div>
+    </div>
 
-<div id="action-btn-container">
 
-    <a id="x-main-link"
-       class="action-btn"
-       href=""
-       target="_blank"
-       rel="noopener noreferrer">
-        🔗 メンバーの公式Xを見る ↗
-    </a>
+    <!-- カウントダウン -->
 
-    <a id="x-share-btn"
-       class="action-btn"
-       href=""
-       target="_blank"
-       rel="noopener noreferrer">
-        💬 この結果を X でシェアする ↗
-    </a>
+    <div id="since-target-box">
 
-</div>
+        📅 2026年9月13日まであと:
 
-<div class="box">
-    <h3>📊 当選回数カウンター</h3>
-    <div id="list"></div>
-</div>
+        <span id="since-target-info">
+            計算中...
+        </span>
 
-<div class="box">
-    <h3>📜 当選履歴（直近50件）</h3>
-    <div id="history-list"></div>
-</div>
+    </div>
+
+
+    <!-- 最も出ていないメンバー -->
+
+    <div id="rarest-box">
+
+        ⏳ 最も出ていないメンバー:
+
+        <span id="rarest-info">
+            計算中...
+        </span>
+
+    </div>
+
+
+    <!-- Firebase接続 -->
+
+    <div id="connection-box">
+
+        <span id="connection-status">
+            🔄 サーバー接続中...
+        </span>
+
+    </div>
+
+
+    <!-- ガチャ結果 -->
+
+    <div id="win-container">
+
+        <div id="display">
+            ガチャ起動中...
+        </div>
+
+    </div>
+
+
+    <div id="win-time-display"></div>
+
+
+    <!-- Xボタン -->
+
+    <div id="action-btn-container">
+
+        <a
+            id="x-main-link"
+            class="action-btn"
+            href=""
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            🔗 メンバーの公式Xを見る ↗
+        </a>
+
+        <a
+            id="x-share-btn"
+            class="action-btn"
+            href=""
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            💬 この結果を X でシェアする ↗
+        </a>
+
+    </div>
+
+
+    <!-- 当選回数 -->
+
+    <div class="box">
+
+        <h3>
+            📊 当選回数カウンター
+        </h3>
+
+        <div id="list"></div>
+
+    </div>
+
+
+    <!-- 履歴 -->
+
+    <div class="box">
+
+        <h3>
+            📜 当選履歴（直近50件）
+        </h3>
+
+        <div id="history-list"></div>
+
+    </div>
 
 
 <script>
 
-/* ==================================================
+/* =========================================================
    Firebase設定
-================================================== */
+========================================================= */
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCurJ0xKJLE-Z9GGEWcN-R3f5aAmX0FWmI",
-    authDomain: "spaga-gacha.firebaseapp.com",
-    databaseURL: "https://spaga-gacha-default-rtdb.firebaseio.com",
-    projectId: "spaga-gacha",
-    storageBucket: "spaga-gacha.firebasestorage.app",
-    messagingSenderId: "53575541764",
-    appId: "1:53575541764:web:128b89f7b7bbd91c4d0151",
-    measurementId: "G-J5D2PDVF1Y"
+
+    apiKey:
+        "AIzaSyCurJ0xKJLE-Z9GGEWcN-R3f5aAmX0FWmI",
+
+    authDomain:
+        "spaga-gacha.firebaseapp.com",
+
+    databaseURL:
+        "https://spaga-gacha-default-rtdb.firebaseio.com",
+
+    projectId:
+        "spaga-gacha",
+
+    storageBucket:
+        "spaga-gacha.firebasestorage.app",
+
+    messagingSenderId:
+        "53575541764",
+
+    appId:
+        "1:53575541764:web:128b89f7b7bbd91c4d0151",
+
+    measurementId:
+        "G-J5D2PDVF1Y"
+
 };
+
+
+/* Firebase起動 */
 
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
 
-const stateRef = db.ref("gacha_state");
+const stateRef =
+    db.ref("gacha_state");
 
 
-/* ==================================================
+/* =========================================================
    メンバー
-================================================== */
+========================================================= */
 
 const members = [
+
     "門林有羽",
     "竹内ななみ",
     "鎌田彩樺",
@@ -363,12 +747,13 @@ const members = [
     "櫻井穂夏",
     "浜田萌帆",
     "二宮伶寧"
+
 ];
 
 
-/* ==================================================
+/* =========================================================
    メンバーカラー
-================================================== */
+========================================================= */
 
 const memberColors = {
 
@@ -391,61 +776,78 @@ const memberColors = {
 };
 
 
-/* ==================================================
+/* =========================================================
    X
-================================================== */
+========================================================= */
 
 const memberXUrls = {
 
-    "門林有羽": "https://x.com/SG4_YUU",
+    "門林有羽":
+        "https://x.com/SG4_YUU",
 
-    "竹内ななみ": "https://x.com/SG5_nanami",
+    "竹内ななみ":
+        "https://x.com/SG5_nanami",
 
-    "鎌田彩樺": "https://x.com/SG6_AYAKA_avex",
+    "鎌田彩樺":
+        "https://x.com/SG6_AYAKA_avex",
 
-    "柏綾菜": "https://x.com/SG6_AYANA_avex",
+    "柏綾菜":
+        "https://x.com/SG6_AYANA_avex",
 
-    "河村果歩": "https://x.com/SG6_KAHO_avex",
+    "河村果歩":
+        "https://x.com/SG6_KAHO_avex",
 
-    "櫻井穂夏": "https://x.com/SG6_HONOKA_avex",
+    "櫻井穂夏":
+        "https://x.com/SG6_HONOKA_avex",
 
-    "浜田萌帆": "https://x.com/SG7_MOYUHO",
+    "浜田萌帆":
+        "https://x.com/SG7_MOYUHO",
 
-    "二宮伶寧": "https://x.com/SG7_RUNE"
+    "二宮伶寧":
+        "https://x.com/SG7_RUNE"
 
 };
 
 
-/* ==================================================
+/* =========================================================
    誕生日
-================================================== */
+========================================================= */
 
 const memberBirthdays = {
 
-    "門林有羽": { month: 10, day: 28 },
+    "門林有羽":
+        { month: 10, day: 28 },
 
-    "竹内ななみ": { month: 10, day: 2 },
+    "竹内ななみ":
+        { month: 10, day: 2 },
 
-    "鎌田彩樺": { month: 4, day: 29 },
+    "鎌田彩樺":
+        { month: 4, day: 29 },
 
-    "柏綾菜": { month: 7, day: 20 },
+    "柏綾菜":
+        { month: 7, day: 20 },
 
-    "河村果歩": { month: 6, day: 17 },
+    "河村果歩":
+        { month: 6, day: 17 },
 
-    "櫻井穂夏": { month: 7, day: 6 },
+    "櫻井穂夏":
+        { month: 7, day: 6 },
 
-    "浜田萌帆": { month: 10, day: 29 },
+    "浜田萌帆":
+        { month: 10, day: 29 },
 
-    "二宮伶寧": { month: 9, day: 16 }
+    "二宮伶寧":
+        { month: 9, day: 16 }
 
 };
 
 
-/* ==================================================
-   ガチャリール
-================================================== */
+/* =========================================================
+   リール
+========================================================= */
 
 const reel1 = [
+
     "門",
     "竹",
     "鎌",
@@ -454,9 +856,11 @@ const reel1 = [
     "櫻",
     "浜",
     "二"
+
 ];
 
 const reel2 = [
+
     "林",
     "内",
     "田",
@@ -465,9 +869,11 @@ const reel2 = [
     "井",
     "宮",
     "田"
+
 ];
 
 const reel3 = [
+
     "有",
     "な",
     "彩",
@@ -476,9 +882,11 @@ const reel3 = [
     "穂",
     "萌",
     "伶"
+
 ];
 
 const reel4 = [
+
     "羽",
     "な",
     "樺",
@@ -486,16 +894,19 @@ const reel4 = [
     "夏",
     "帆",
     "寧"
+
 ];
 
 const reel5 = [
+
     "み"
+
 ];
 
 
-/* ==================================================
-   データ
-================================================== */
+/* =========================================================
+   ローカル状態
+========================================================= */
 
 let counts = {};
 
@@ -507,64 +918,63 @@ let lastWinTime = "";
 
 let lastHitTimestamps = {};
 
+let currentSpinningText = "";
 
-members.forEach(name => {
+let firebaseConnected = false;
 
-    counts[name] = 0;
+
+/* 初期化 */
+
+members.forEach(member => {
+
+    counts[member] = 0;
 
 });
 
 
-/* ==================================================
-   Firebase同期
-================================================== */
+/* =========================================================
+   Firebase接続監視
+========================================================= */
 
-stateRef.on("value", snapshot => {
-
-    const data = snapshot.val();
-
-    if (data) {
-
-        counts = data.counts || {};
-
-        history = data.history || [];
-
-        lastWinner = data.lastWinner || "";
-
-        lastWinTime = data.lastWinTime || "";
-
-        lastHitTimestamps =
-            data.lastHitTimestamps || {};
-
-    }
+const connectedRef =
+    firebase.database().ref(".info/connected");
 
 
-    members.forEach(name => {
+connectedRef.on("value", (snapshot) => {
 
-        if (counts[name] === undefined) {
+    const status =
+        document.getElementById(
+            "connection-status"
+        );
 
-            counts[name] = 0;
+    if (snapshot.val() === true) {
 
-        }
+        firebaseConnected = true;
 
-    });
+        status.innerText =
+            "🟢 サーバー接続済み";
 
+        status.classList.remove(
+            "disconnected"
+        );
 
-    document.getElementById(
-        "live-spinning"
-    ).innerText = "サーバー接続済み";
+        status.classList.add(
+            "connected"
+        );
 
+    } else {
 
-    render();
+        firebaseConnected = false;
 
-    if (
-        lastWinner &&
-        members.includes(lastWinner)
-    ) {
+        status.innerText =
+            "🔴 サーバー接続なし";
 
-        showWinnerDisplay(
-            lastWinner,
-            lastWinTime
+        status.classList.remove(
+            "connected"
+        );
+
+        status.classList.add(
+            "disconnected"
         );
 
     }
@@ -572,51 +982,193 @@ stateRef.on("value", snapshot => {
 });
 
 
-/* ==================================================
+/* =========================================================
+   Firebaseから状態を受信
+========================================================= */
+
+stateRef.on("value", (snapshot) => {
+
+    const data = snapshot.val();
+
+    if (!data) {
+
+        render();
+
+        return;
+
+    }
+
+
+    counts =
+        data.counts || counts;
+
+    history =
+        data.history || [];
+
+    lastWinner =
+        data.lastWinner || "";
+
+    lastWinTime =
+        data.lastWinTime || "";
+
+    lastHitTimestamps =
+        data.lastHitTimestamps || {};
+
+    currentSpinningText =
+        data.spinningText || "";
+
+
+    /* メンバーが存在しない場合は0 */
+
+    members.forEach(member => {
+
+        if (
+            counts[member] === undefined ||
+            counts[member] === null
+        ) {
+
+            counts[member] = 0;
+
+        }
+
+    });
+
+
+    /* =====================================================
+       Firebaseの最新ガチャ結果を表示
+    ===================================================== */
+
+    if (currentSpinningText) {
+
+        if (
+            members.includes(
+                currentSpinningText
+            )
+        ) {
+
+            showWinnerDisplay(
+                currentSpinningText,
+                lastWinTime
+            );
+
+        } else {
+
+            showMissDisplay(
+                currentSpinningText
+            );
+
+        }
+
+    }
+
+
+    render();
+
+});
+
+
+/* =========================================================
    時計
-================================================== */
+========================================================= */
 
 function updateClock() {
 
     const now = new Date();
 
-    const y = now.getFullYear();
+
+    const y =
+        now.getFullYear();
 
     const m =
-        String(now.getMonth() + 1)
-        .padStart(2, "0");
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
 
     const d =
-        String(now.getDate())
-        .padStart(2, "0");
+        String(
+            now.getDate()
+        ).padStart(2, "0");
+
 
     const day =
-        ["日","月","火","水","木","金","土"]
-        [now.getDay()];
+        [
+            "日",
+            "月",
+            "火",
+            "水",
+            "木",
+            "金",
+            "土"
+        ][now.getDay()];
 
 
-    document.getElementById(
-        "date-display"
-    ).innerText =
+    document
+        .getElementById(
+            "date-display"
+        )
+        .innerText =
         `${y}年${m}月${d}日 (${day})`;
 
 
+    /* 誕生日 */
+
+    const birthdayEl =
+        document.getElementById(
+            "birthday-display"
+        );
+
+    const todayBirthday =
+        members.find(member => {
+
+            const birthday =
+                memberBirthdays[member];
+
+            return (
+                birthday &&
+                birthday.month ===
+                    now.getMonth() + 1 &&
+                birthday.day ===
+                    now.getDate()
+            );
+
+        });
+
+
+    if (todayBirthday) {
+
+        birthdayEl.innerText =
+            `🎂 Happy Birthday ${todayBirthday}`;
+
+    } else {
+
+        birthdayEl.innerText = "";
+
+    }
+
+
+    /* 時刻 */
+
     const hh =
-        String(now.getHours())
-        .padStart(2, "0");
+        String(
+            now.getHours()
+        ).padStart(2, "0");
 
     const mm =
-        String(now.getMinutes())
-        .padStart(2, "0");
+        String(
+            now.getMinutes()
+        ).padStart(2, "0");
 
     const ss =
-        String(now.getSeconds())
-        .padStart(2, "0");
+        String(
+            now.getSeconds()
+        ).padStart(2, "0");
 
 
-    document.getElementById(
-        "time-display"
-    ).innerText =
+    document
+        .getElementById(
+            "time-display"
+        )
+        .innerText =
         `${hh}:${mm}:${ss}`;
 
 
@@ -631,6 +1183,8 @@ function updateClock() {
 }
 
 
+/* 1秒ごと */
+
 setInterval(
     updateClock,
     1000
@@ -639,13 +1193,15 @@ setInterval(
 updateClock();
 
 
-/* ==================================================
+/* =========================================================
    9/13カウントダウン
-================================================== */
+========================================================= */
 
-function updateSinceTargetDisplay(now) {
+function updateSinceTargetDisplay(
+    currentTimestamp
+) {
 
-    const target =
+    const targetTime =
         new Date(
             2026,
             8,
@@ -656,8 +1212,9 @@ function updateSinceTargetDisplay(now) {
         ).getTime();
 
 
-    let diff =
-        target - now;
+    let diffMs =
+        targetTime -
+        currentTimestamp;
 
 
     const el =
@@ -666,7 +1223,7 @@ function updateSinceTargetDisplay(now) {
         );
 
 
-    if (diff <= 0) {
+    if (diffMs <= 0) {
 
         el.innerText =
             "2026年9月13日を迎えました！";
@@ -676,35 +1233,39 @@ function updateSinceTargetDisplay(now) {
     }
 
 
-    const sec =
-        Math.floor(diff / 1000);
+    const diffSec =
+        Math.floor(
+            diffMs / 1000
+        );
 
 
     const days =
         Math.floor(
-            sec / 86400
+            diffSec / (3600 * 24)
         );
 
 
     const hours =
         Math.floor(
-            (sec % 86400) / 3600
+            (diffSec % (3600 * 24))
+            / 3600
         );
 
 
     const minutes =
         Math.floor(
-            (sec % 3600) / 60
+            (diffSec % 3600)
+            / 60
         );
 
 
     const seconds =
-        sec % 60;
+        diffSec % 60;
 
 
     el.innerHTML =
         `<span style="color:#ff4081">
-        ${days}日
+            ${days}日
         </span>
         ${hours}時間
         ${minutes}分
@@ -713,35 +1274,44 @@ function updateSinceTargetDisplay(now) {
 }
 
 
-/* ==================================================
+/* =========================================================
    最も出ていないメンバー
-================================================== */
+========================================================= */
 
-function updateRarestDisplay(now) {
+function updateRarestDisplay(
+    currentTimestamp
+) {
 
-    let rarest = null;
+    let rarestMember = null;
 
-    let oldest = Infinity;
-
-
-    members.forEach(name => {
-
-        let time =
-            lastHitTimestamps[name];
+    let oldestTime = Infinity;
 
 
-        if (time === undefined) {
+    members.forEach(member => {
 
-            time = 0;
+        let hitTime =
+            lastHitTimestamps[member];
+
+
+        if (
+            hitTime === undefined ||
+            hitTime === null
+        ) {
+
+            hitTime = 0;
 
         }
 
 
-        if (time < oldest) {
+        if (
+            hitTime < oldestTime
+        ) {
 
-            oldest = time;
+            oldestTime =
+                hitTime;
 
-            rarest = name;
+            rarestMember =
+                member;
 
         }
 
@@ -754,7 +1324,7 @@ function updateRarestDisplay(now) {
         );
 
 
-    if (!rarest) {
+    if (!rarestMember) {
 
         el.innerText =
             "データなし";
@@ -764,11 +1334,13 @@ function updateRarestDisplay(now) {
     }
 
 
-    if (oldest === 0) {
+    /* 一度も出ていない */
+
+    if (oldestTime === 0) {
 
         el.innerHTML =
-            `<span style="color:${memberColors[rarest]}">
-            ${rarest}
+            `<span style="color:${memberColors[rarestMember]}">
+                ${rarestMember}
             </span>
             （まだ一度も出ていません）`;
 
@@ -777,47 +1349,55 @@ function updateRarestDisplay(now) {
     }
 
 
-    let diff =
-        now - oldest;
+    let diffMs =
+        currentTimestamp -
+        oldestTime;
 
 
-    if (diff < 0) {
+    if (diffMs < 0) {
 
-        diff = 0;
+        diffMs = 0;
 
     }
 
 
-    const sec =
-        Math.floor(diff / 1000);
+    const diffSec =
+        Math.floor(
+            diffMs / 1000
+        );
 
 
     const days =
-        Math.floor(sec / 86400);
+        Math.floor(
+            diffSec / (3600 * 24)
+        );
 
 
     const hours =
         Math.floor(
-            (sec % 86400) / 3600
+            (diffSec % (3600 * 24))
+            / 3600
         );
 
 
     const minutes =
         Math.floor(
-            (sec % 3600) / 60
+            (diffSec % 3600)
+            / 60
         );
 
 
     const seconds =
-        sec % 60;
+        diffSec % 60;
 
 
-    let text = "";
+    let timeStr = "";
 
 
     if (days > 0) {
 
-        text += `${days}日`;
+        timeStr +=
+            `${days}日`;
 
     }
 
@@ -827,7 +1407,8 @@ function updateRarestDisplay(now) {
         hours > 0
     ) {
 
-        text += `${hours}時間`;
+        timeStr +=
+            `${hours}時間`;
 
     }
 
@@ -838,45 +1419,328 @@ function updateRarestDisplay(now) {
         minutes > 0
     ) {
 
-        text += `${minutes}分`;
+        timeStr +=
+            `${minutes}分`;
 
     }
 
 
-    text += `${seconds}秒`;
+    timeStr +=
+        `${seconds}秒`;
 
 
     el.innerHTML =
-        `<span style="color:${memberColors[rarest]}">
-        ${rarest}
+        `<span style="color:${memberColors[rarestMember]}">
+            ${rarestMember}
         </span>
         ―― 最後に当たってから
         <span style="color:#ff4081">
-        ${text}
+            ${timeStr}
         </span>
         ぶり`;
 
 }
 
 
-/* ==================================================
-   ランダムな名前
-================================================== */
+/* =========================================================
+   当たり表示
+========================================================= */
+
+function showWinnerDisplay(
+    name,
+    timeString
+) {
+
+    const displayEl =
+        document.getElementById(
+            "display"
+        );
+
+
+    displayEl.innerText =
+        `🎉 当たり！！【 ${name} 】`;
+
+
+    displayEl.style.color =
+        memberColors[name] ||
+        "#ff4081";
+
+
+    displayEl.classList.remove(
+        "miss-animation"
+    );
+
+    displayEl.classList.remove(
+        "hit-animation"
+    );
+
+
+    void displayEl.offsetWidth;
+
+
+    displayEl.classList.add(
+        "hit-animation"
+    );
+
+
+    /* 当選時刻 */
+
+    const timeEl =
+        document.getElementById(
+            "win-time-display"
+        );
+
+
+    if (timeString) {
+
+        timeEl.innerText =
+            `当選時刻: ${timeString}`;
+
+        timeEl.style.display =
+            "block";
+
+    }
+
+
+    /* X */
+
+    if (memberXUrls[name]) {
+
+        const xLinkEl =
+            document.getElementById(
+                "x-main-link"
+            );
+
+
+        xLinkEl.href =
+            memberXUrls[name];
+
+
+        xLinkEl.innerText =
+            `🔗 ${name} の公式Xを見る ↗`;
+
+
+        const color =
+            memberColors[name] ||
+            "#e91e63";
+
+
+        xLinkEl.style.borderColor =
+            color;
+
+
+        xLinkEl.style.boxShadow =
+            `0 4px 15px ${color}66`;
+
+    }
+
+
+    /* シェア */
+
+    let elapsedStr = "";
+
+
+    const hitTime =
+        lastHitTimestamps[name];
+
+
+    if (hitTime) {
+
+        let diffMs =
+            Date.now() -
+            hitTime;
+
+
+        let diffSec =
+            Math.floor(
+                diffMs / 1000
+            );
+
+
+        let days =
+            Math.floor(
+                diffSec / (3600 * 24)
+            );
+
+
+        let hours =
+            Math.floor(
+                (diffSec % (3600 * 24))
+                / 3600
+            );
+
+
+        let minutes =
+            Math.floor(
+                (diffSec % 3600)
+                / 60
+            );
+
+
+        let seconds =
+            diffSec % 60;
+
+
+        if (days > 0) {
+
+            elapsedStr +=
+                `${days}日`;
+
+        }
+
+
+        if (
+            days > 0 ||
+            hours > 0
+        ) {
+
+            elapsedStr +=
+                `${hours}時間`;
+
+        }
+
+
+        if (
+            days > 0 ||
+            hours > 0 ||
+            minutes > 0
+        ) {
+
+            elapsedStr +=
+                `${minutes}分`;
+
+        }
+
+
+        elapsedStr +=
+            `${seconds}秒ぶり`;
+
+    }
+
+
+    let shareText =
+        `SUPER☆GiRLS 第7章 ガチャ結果✨\n\n` +
+        `🎉 【 ${name} 】が当たりました！`;
+
+
+    if (elapsedStr) {
+
+        shareText +=
+            `\n（前回から ${elapsedStr}）`;
+
+    }
+
+
+    shareText +=
+        `\n\n#スパガ #SUPERGiRLS`;
+
+
+    const shareUrl =
+        `https://twitter.com/intent/tweet?text=` +
+        encodeURIComponent(
+            shareText
+        );
+
+
+    document
+        .getElementById(
+            "x-share-btn"
+        )
+        .href =
+        shareUrl;
+
+
+    document
+        .getElementById(
+            "action-btn-container"
+        )
+        .style.display =
+        "flex";
+
+}
+
+
+/* =========================================================
+   ハズレ表示
+========================================================= */
+
+function showMissDisplay(
+    name
+) {
+
+    const displayEl =
+        document.getElementById(
+            "display"
+        );
+
+
+    displayEl.innerText =
+        `😢 ハズレ【 ${name} 】`;
+
+
+    displayEl.style.color =
+        "#aaa";
+
+
+    displayEl.classList.remove(
+        "hit-animation"
+    );
+
+    displayEl.classList.remove(
+        "miss-animation"
+    );
+
+
+    void displayEl.offsetWidth;
+
+
+    displayEl.classList.add(
+        "miss-animation"
+    );
+
+
+    /* 当選時刻を消す */
+
+    const timeEl =
+        document.getElementById(
+            "win-time-display"
+        );
+
+
+    timeEl.style.display =
+        "none";
+
+
+    /* Xボタンを消す */
+
+    document
+        .getElementById(
+            "action-btn-container"
+        )
+        .style.display =
+        "none";
+
+}
+
+
+/* =========================================================
+   ランダム文字列生成
+========================================================= */
 
 function getRandomLength() {
 
-    const r =
+    const rand =
         Math.random();
 
 
-    if (r < 1 / 8) {
+    if (rand < 1 / 8) {
 
         return 3;
 
     }
 
 
-    if (r < 7 / 8) {
+    if (rand < 7 / 8) {
 
         return 4;
 
@@ -888,9 +1752,13 @@ function getRandomLength() {
 }
 
 
-function createRandomName() {
+/* =========================================================
+   ランダム名前生成
+========================================================= */
 
-    const length =
+function generateRandomName() {
+
+    const len =
         getRandomLength();
 
 
@@ -924,7 +1792,7 @@ function createRandomName() {
         ];
 
 
-    if (length >= 4) {
+    if (len >= 4) {
 
         name +=
             reel4[
@@ -937,7 +1805,7 @@ function createRandomName() {
     }
 
 
-    if (length === 5) {
+    if (len === 5) {
 
         name +=
             reel5[
@@ -955,284 +1823,369 @@ function createRandomName() {
 }
 
 
-/* ==================================================
-   ガチャ
-================================================== */
+/* =========================================================
+   10秒ごとのガチャ
+========================================================= */
 
-function loop() {
-
-    const name =
-        createRandomName();
+let lastClaimedTick = null;
 
 
-    /* ハズレも必ず表示 */
+/*
+   10秒単位の番号。
 
-    document.getElementById(
-        "live-spinning"
-    ).innerText =
-        `ガチャ回転中: ${name}`;
+   例：
+
+   01:00:00 → tick 1
+   01:00:10 → tick 2
+   01:00:20 → tick 3
+
+   Firebaseのtransactionを使って
+   「その10秒を誰が担当するか」を決める。
+*/
+
+function runGacha() {
+
+    const tick =
+        Math.floor(
+            Date.now() / 10000
+        );
 
 
-    /* 当たりの場合 */
-
-    if (!members.includes(name)) {
+    if (
+        lastClaimedTick === tick
+    ) {
 
         return;
 
     }
 
 
+    const tickRef =
+        db.ref(
+            "gacha_state/tick"
+        );
+
+
+    tickRef.transaction(
+        current => {
+
+            if (
+                current &&
+                current.tick === tick
+            ) {
+
+                return;
+
+            }
+
+
+            return {
+
+                tick: tick,
+
+                owner:
+                    "client_" +
+                    Math.random()
+                        .toString(36)
+                        .substring(2)
+
+            };
+
+        },
+
+        (error, committed, snapshot) => {
+
+            if (error) {
+
+                console.error(
+                    "tick transaction error:",
+                    error
+                );
+
+                return;
+
+            }
+
+
+            if (!committed) {
+
+                return;
+
+            }
+
+
+            const result =
+                snapshot.val();
+
+
+            if (!result) {
+
+                return;
+
+            }
+
+
+            /*
+               自分がこの10秒の担当者か確認
+            */
+
+            if (
+                !result.owner
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+               transaction後に
+               自分が書き込んだものかを
+               判定するため、ここでは
+               tickだけで制御する。
+
+               同じページ内では1回だけ。
+            */
+
+            if (
+                lastClaimedTick === tick
+            ) {
+
+                return;
+
+            }
+
+
+            lastClaimedTick =
+                tick;
+
+
+            generateAndSaveResult();
+
+        }
+
+    );
+
+}
+
+
+/* =========================================================
+   ガチャ結果を生成してFirebaseへ保存
+========================================================= */
+
+function generateAndSaveResult() {
+
+    const name =
+        generateRandomName();
+
+
+    /*
+       現在時刻
+    */
+
     const now =
         new Date();
 
 
     const hh =
-        String(now.getHours())
-        .padStart(2, "0");
+        String(
+            now.getHours()
+        ).padStart(2, "0");
+
 
     const mm =
-        String(now.getMinutes())
-        .padStart(2, "0");
+        String(
+            now.getMinutes()
+        ).padStart(2, "0");
+
 
     const ss =
-        String(now.getSeconds())
-        .padStart(2, "0");
+        String(
+            now.getSeconds()
+        ).padStart(2, "0");
 
 
     const timeString =
         `${hh}:${mm}:${ss}`;
 
 
-    counts[name] =
-        (counts[name] || 0) + 1;
+    /*
+       まずハズレも含めて
+       Firebaseへ保存する。
+    */
+
+    const updateData = {
+
+        spinningText:
+            name
+
+    };
 
 
-    lastWinner =
-        name;
+    /*
+       当たりの場合
+    */
+
+    if (
+        members.includes(name)
+    ) {
+
+        /*
+           現在の値を使って
+           カウントを増やす
+        */
+
+        const newCounts = {
+            ...counts
+        };
 
 
-    lastWinTime =
-        timeString;
+        members.forEach(member => {
+
+            if (
+                newCounts[member] === undefined
+            ) {
+
+                newCounts[member] = 0;
+
+            }
+
+        });
 
 
-    lastHitTimestamps[name] =
-        now.getTime();
+        newCounts[name] =
+            Number(
+                newCounts[name] || 0
+            ) + 1;
 
 
-    history.unshift({
+        /*
+           履歴
+        */
 
-        name: name,
+        const newHistory = [
 
-        time: timeString
+            {
+                name:
+                    name,
 
-    });
+                time:
+                    timeString
 
+            },
 
-    if (history.length > 50) {
+            ...history
 
-        history =
-            history.slice(0, 50);
-
-    }
-
-
-    /* Firebaseへ保存 */
-
-    stateRef.set({
-
-        counts: counts,
-
-        history: history,
-
-        lastWinner: lastWinner,
-
-        lastWinTime: lastWinTime,
-
-        lastHitTimestamps:
-            lastHitTimestamps,
-
-        spinningText: name
-
-    });
+        ];
 
 
-    showWinnerDisplay(
-        name,
-        timeString
-    );
+        /*
+           50件まで
+        */
 
+        if (
+            newHistory.length > 50
+        ) {
 
-    render();
-
-}
-
-
-/* ==================================================
-   当選表示
-================================================== */
-
-function showWinnerDisplay(
-    name,
-    timeString
-) {
-
-    const display =
-        document.getElementById(
-            "display"
-        );
-
-
-    display.innerText =
-        `🎉 当たり！！【 ${name} 】`;
-
-
-    display.style.color =
-        memberColors[name] ||
-        "#ff4081";
-
-
-    const timeEl =
-        document.getElementById(
-            "win-time-display"
-        );
-
-
-    if (timeString) {
-
-        timeEl.innerText =
-            `当選時刻: ${timeString}`;
-
-        timeEl.style.display =
-            "block";
-
-    }
-
-
-    const xLink =
-        document.getElementById(
-            "x-main-link"
-        );
-
-
-    if (memberXUrls[name]) {
-
-        xLink.href =
-            memberXUrls[name];
-
-        xLink.innerText =
-            `🔗 ${name} の公式Xを見る ↗`;
-
-        xLink.style.borderColor =
-            memberColors[name] ||
-            "#e91e63";
-
-    }
-
-
-    let elapsed = "";
-
-
-    const hitTime =
-        lastHitTimestamps[name];
-
-
-    if (hitTime) {
-
-        let diff =
-            Date.now() - hitTime;
-
-
-        if (diff < 0) {
-
-            diff = 0;
+            newHistory.length = 50;
 
         }
 
 
-        const sec =
-            Math.floor(diff / 1000);
+        /*
+           最後に当たった時刻
+        */
+
+        const newLastHits = {
+
+            ...lastHitTimestamps
+
+        };
 
 
-        const days =
-            Math.floor(sec / 86400);
+        newLastHits[name] =
+            now.getTime();
 
 
-        const hours =
-            Math.floor(
-                (sec % 86400) / 3600
-            );
+        /*
+           Firebaseへ保存
+        */
+
+        updateData.counts =
+            newCounts;
 
 
-        const minutes =
-            Math.floor(
-                (sec % 3600) / 60
-            );
+        updateData.history =
+            newHistory;
 
 
-        const seconds =
-            sec % 60;
+        updateData.lastWinner =
+            name;
 
 
-        if (days > 0)
-            elapsed += `${days}日`;
+        updateData.lastWinTime =
+            timeString;
 
-        if (
-            days > 0 ||
-            hours > 0
-        )
-            elapsed += `${hours}時間`;
 
-        if (
-            days > 0 ||
-            hours > 0 ||
-            minutes > 0
-        )
-            elapsed += `${minutes}分`;
-
-        elapsed += `${seconds}秒ぶり`;
+        updateData.lastHitTimestamps =
+            newLastHits;
 
     }
 
 
-    let shareText =
-        `SUPER☆GiRLS 第7章 ガチャ結果✨\n\n` +
-        `🎉 【 ${name} 】が当たりました！`;
+    /*
+       ハズレなら
+       spinningTextだけ更新。
 
+       つまり
 
-    if (elapsed) {
+       竹内果歩
 
-        shareText +=
-            `\n（前回から ${elapsed}）`;
+       などもFirebaseに保存される。
+    */
 
-    }
+    stateRef.update(
+        updateData
+    )
+    .catch(error => {
 
+        console.error(
+            "Firebase更新エラー:",
+            error
+        );
 
-    shareText +=
-        `\n\n#スパガ #SUPERGiRLS`;
-
-
-    const shareUrl =
-        `https://twitter.com/intent/tweet?text=` +
-        encodeURIComponent(shareText);
-
-
-    document.getElementById(
-        "x-share-btn"
-    ).href =
-        shareUrl;
-
-
-    document.getElementById(
-        "action-btn-container"
-    ).style.display =
-        "flex";
+    });
 
 }
 
 
-/* ==================================================
-   表示更新
-================================================== */
+/* =========================================================
+   ガチャ開始
+========================================================= */
+
+/*
+   ページを開いた瞬間に
+   いきなり結果を書き込まない。
+
+   現在の10秒区切りに合わせて
+   次のタイミングから開始する。
+*/
+
+setTimeout(() => {
+
+    runGacha();
+
+    setInterval(
+        runGacha,
+        10000
+    );
+
+}, 1000);
+
+
+/* =========================================================
+   メンバー一覧表示
+========================================================= */
 
 function render() {
 
@@ -1240,39 +2193,48 @@ function render() {
         new Date();
 
 
-    const month =
+    const currentMonth =
         now.getMonth() + 1;
 
 
-    const date =
+    const currentDate =
         now.getDate();
 
 
     let html = "";
 
 
-    members.forEach(name => {
+    members.forEach(member => {
 
         const color =
-            memberColors[name] ||
-            "#fff";
+            memberColors[member] ||
+            "#ffffff";
+
+
+        const xUrl =
+            memberXUrls[member] ||
+            "#";
 
 
         const birthday =
-            memberBirthdays[name];
+            memberBirthdays[member];
 
 
         const isBirthday =
             birthday &&
-            birthday.month === month &&
-            birthday.day === date;
+            birthday.month ===
+                currentMonth &&
+            birthday.day ===
+                currentDate;
 
 
         const birthdayHtml =
             isBirthday
+
                 ? `<span class="birthday-tag">
-                    🎂 Happy Birthday ${name}
+                    🎂 Happy Birthday ${member}
                    </span>`
+
                 : "";
 
 
@@ -1284,58 +2246,76 @@ function render() {
 
                     <span
                         class="member-badge"
-                        style="background:${color}">
-                    </span>
+                        style="
+                            background-color:${color};
+                        "
+                    ></span>
 
                     <span
                         class="member-name"
-                        style="color:${color}">
-                        ${name}
+                        style="
+                            color:${color};
+                        "
+                    >
+                        ${member}
                     </span>
 
                     ${birthdayHtml}
 
                     <a
-                        href="${memberXUrls[name]}"
+                        href="${xUrl}"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="x-sub-link">
+                        class="x-sub-link"
+                    >
                         X ↗
                     </a>
 
                 </div>
 
                 <span class="count-num">
-                    ${counts[name] || 0} 回
+                    ${counts[member] || 0} 回
                 </span>
 
             </div>
+
         `;
 
     });
 
 
-    document.getElementById(
-        "list"
-    ).innerHTML =
+    document
+        .getElementById(
+            "list"
+        )
+        .innerHTML =
         html;
 
+
+    /* =====================================================
+       履歴
+    ===================================================== */
 
     let historyHtml = "";
 
 
     if (
-        !history ||
         history.length === 0
     ) {
 
-        historyHtml =
-            `<div style="
-                color:#777;
-                text-align:center;
-                padding:10px;">
+        historyHtml = `
+
+            <div
+                style="
+                    color:#777;
+                    text-align:center;
+                    padding:10px;
+                "
+            >
                 まだ履歴はありません
-             </div>`;
+            </div>
+
+        `;
 
     } else {
 
@@ -1343,7 +2323,7 @@ function render() {
 
             const color =
                 memberColors[item.name] ||
-                "#fff";
+                "#ffffff";
 
 
             historyHtml += `
@@ -1354,13 +2334,17 @@ function render() {
 
                         <span
                             class="history-badge"
-                            style="background:${color}">
-                        </span>
+                            style="
+                                background-color:${color};
+                            "
+                        ></span>
 
                         <span
                             style="
                                 color:${color};
-                                font-weight:bold;">
+                                font-weight:bold;
+                            "
+                        >
                             🎉 ${item.name}
                         </span>
 
@@ -1371,6 +2355,7 @@ function render() {
                     </span>
 
                 </div>
+
             `;
 
         });
@@ -1378,29 +2363,21 @@ function render() {
     }
 
 
-    document.getElementById(
-        "history-list"
-    ).innerHTML =
+    document
+        .getElementById(
+            "history-list"
+        )
+        .innerHTML =
         historyHtml;
 
 }
 
 
-/* ==================================================
-   初期表示
-================================================== */
+/* =========================================================
+   初回表示
+========================================================= */
 
 render();
-
-
-/* ==================================================
-   10秒ごとにガチャ
-================================================== */
-
-setInterval(
-    loop,
-    10000
-);
 
 </script>
 
