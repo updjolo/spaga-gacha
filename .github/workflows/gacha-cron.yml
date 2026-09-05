@@ -24,4 +24,4 @@ jobs:
       - name: Run Gacha Script
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        node gacha-server.js
+        run: node gacha-server.js
